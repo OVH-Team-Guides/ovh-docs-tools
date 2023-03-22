@@ -1,1 +1,1 @@
-# ovh-docs-tools
+# OVH-docs-tools
