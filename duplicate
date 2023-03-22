@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-GIT_ROOTPROGRAM=$(basename "$0")
-GIT_ROOTPROGRAM_PATH=$(dirname "$0")
-GIT_ROOTCONFIG_PATH="${PROGRAM_PATH}/config"
-GIT_ROOTOLD_IFS=${IFS}
+PROGRAM=$(basename "$0")
+PROGRAM_PATH=$(dirname "$0")
+CONFIG_PATH="${PROGRAM_PATH}/config"
+OLD_IFS=${IFS}
 
 LANGUAGES=(de-de en-asia en-au en-ca en-gb en-ie en-sg en-us es-es es-us fr-ca fr-fr it-it pl-pl pt-pt)
 OVERWRITE_SUBS='de en es fr it pl pt'
