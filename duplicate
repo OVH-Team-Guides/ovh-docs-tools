@@ -150,6 +150,6 @@ do
       echo
     done
   done && wait
-  #rm -f ${tasks}
+  rm -f ${tasks}
   echo
 done
