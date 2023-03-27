@@ -70,7 +70,6 @@ update_link_subs(){
       REPLACE="${i##*::}"
     fi
   done
-  echo -e "MANAGER:\n * SEARCH ${SEARCH}\n * REPLACE ${REPLACE}"
   sed -i "s,${SEARCH},${REPLACE},g" ${TARGET}
 
   for i in "${OVHCLOUD_LANG[@]}";do
@@ -81,7 +80,6 @@ update_link_subs(){
       REPLACE="www.ovhcloud.com/${i##*::}"
     fi
   done
-  echo -e "OVHCLOUD_LANG:\n * SEARCH ${SEARCH}\n * REPLACE ${REPLACE}"
   sed -i "s,${SEARCH},${REPLACE},g" ${TARGET}
 
   for i in "${OVHDOCS_LANG[@]}";do
@@ -92,7 +90,6 @@ update_link_subs(){
       REPLACE="docs.ovh.com/${i##*::}"
     fi
   done
-  echo -e "OVHDOCS_LANG:\n * SEARCH ${SEARCH}\n * REPLACE ${REPLACE}"
   sed -i "s,${SEARCH},${REPLACE},g" ${TARGET}
 }
 
@@ -125,6 +122,9 @@ do
         GUIDE_UPDATED_KEY=$(grep -Eo "^updated: [0-9]{4}(-[0-9]{2}){2}.+?$" ${GUIDE})
         TARGET_UPDATED_KEY=$(grep -Eo "^updated: [0-9]{4}(-[0-9]{2}){2}.+?$" ${TARGET})
         sed -i "2,/---/ s/${TARGET_UPDATED_KEY}/${GUIDE_UPDATED_KEY}/" ${TARGET}
+        GUIDE_ORDER_KEY=$(grep -Eo "^order: [0-9]{3}.+?$" ${GUIDE})
+        TARGET_ORDER_KEY=$(grep -Eo "^order: [0-9]{3}.+?$" ${TARGET})
+        sed -i "2,/---/ s/${TARGET_ORDER_KEY}/${GUIDE_ORDER_KEY}/" ${TARGET}
       else
         cp -f ${GUIDE} ${TARGET}
         update_link_subs && wait
@@ -135,16 +135,19 @@ do
             fi
           done
           CANONICAL_URL="https://docs.ovh.com/${CANONICAL_LANG}/"
-          IFS='/' read -r -a arr <<< $(dirname ${GUIDE#${GIT_ROOT}\/} | cut -d/ -f 3-)
-          IFS=${OLD_IFS}
-          p=$(echo ${GUIDE#${GIT_ROOT}\/} | awk -F "/" '{print $1"/"$2"/"}')
-          for d in ${arr[@]}
+          IFS='/' read -r -a arr <<< "${GUIDE}"
+          p=''
+          for d in "${arr[@]}"
           do
-            p+=${d}/
-            CANONICAL_URL+=$(cat ${p}*.${GUIDE_SUB}.md | sed -n '2,/---/p' | awk -F ": " '/^slug: / {print $2}'  | tr -d "\r")/
+            p+="${d}/"
+            if [[ -f ${p}product.${GUIDE_SUB}.md ]];then
+              CANONICAL_URL+=$(cat ${p}product.${GUIDE_SUB}.md | sed -n '2,/---/p' | awk -F ": " '/^slug: / {print $2}'  | tr -d "\r")/
+            fi
           done
+          CANONICAL_URL+=$(cat ${GUIDE} | sed -n '2,/---/p' | awk -F ": " '/^slug: / {print $2}')/
           sed -i "2,/---/ s;---;routes:\n    canonical: '${CANONICAL_URL}'\n---;" ${TARGET}
           echo "CANONICAL_URL: ${CANONICAL_URL}"
+          IFS=${OLD_IFS}
         fi
       fi
       echo
