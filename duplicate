@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 PROGRAM=$(basename "$0")
 PROGRAM_PATH=$(dirname "$0")
@@ -70,7 +70,7 @@ update_link_subs(){
       REPLACE="${i##*::}"
     fi
   done
-  sed -i "s,${SEARCH},${REPLACE},g" ${TARGET}
+  sed -i '' "s,${SEARCH},${REPLACE},g" "${TARGET}"
 
   for i in "${OVHCLOUD_LANG[@]}";do
     if [[ "${i%%::*}" == "${GUIDE_SUB}" ]];then
@@ -80,7 +80,7 @@ update_link_subs(){
       REPLACE="www.ovhcloud.com/${i##*::}"
     fi
   done
-  sed -i "s,${SEARCH},${REPLACE},g" ${TARGET}
+  sed -i '' "s,${SEARCH},${REPLACE},g" "${TARGET}"
 
   for i in "${OVHDOCS_LANG[@]}";do
     if [[ "${i%%::*}" == "${GUIDE_SUB}" ]];then
@@ -90,7 +90,7 @@ update_link_subs(){
       REPLACE="docs.ovh.com/${i##*::}"
     fi
   done
-  sed -i "s,${SEARCH},${REPLACE},g" ${TARGET}
+  sed -i '' "s,${SEARCH},${REPLACE},g" "${TARGET}"
 }
 
 git rev-parse --is-inside-work-tree > /dev/null
@@ -99,34 +99,31 @@ cd "${GIT_ROOT}"
 
 find "${GIT_ROOT}" -type f -name "duplicate.task" | while read tasks
 do
-  cat ${tasks} | while read task
+  cat "${tasks}" | while read task
   do
-    GUIDE_SUB=$(echo ${task} | awk -F ":" '{print $1}')
-    GUIDE_CONFIG=$(echo ${task} | awk -F ":" '{print $2}')
-    GUIDE_OVERWRITE=$(echo ${task} | awk -F ":" '{print $3}')
+    GUIDE_SUB=$(echo "${task}" | awk -F ":" '{print $1}')
+    GUIDE_CONFIG=$(echo "${task}" | awk -F ":" '{print $2}')
+    GUIDE_OVERWRITE=$(echo "${task}" | awk -F ":" '{print $3}')
     GUIDE=$(dirname ${tasks})/guide.${GUIDE_SUB}.md
-    [[ -n ${GUIDE_CONFIG} ]] && source "${CONFIG_PATH}/${GUIDE_CONFIG}"
-    [[ -n ${GUIDE_OVERWRITE} ]] && eval ${GUIDE_OVERWRITE}
+    [[ -f "${GUIDE_CONFIG}" ]] && source "${CONFIG_PATH}/${GUIDE_CONFIG}"
+    [[ -n "${GUIDE_OVERWRITE}" ]] && eval "${GUIDE_OVERWRITE}"
     LANGUAGES=("${LANGUAGES[@]/$GUIDE_SUB}")
     for LANG in ${LANGUAGES[@]}
     do
-      TARGET=$(dirname ${GUIDE})/guide.${LANG}.md
+      TARGET="$(dirname ${GUIDE})/guide.${LANG}.md"
       echo "GUIDE: ${GUIDE#${GIT_ROOT}\/}"
       echo "TARGET: ${TARGET#${GIT_ROOT}\/}"
-      if [[ -f ${TARGET} && ${OVERWRITE_MODE} == "body" && $(echo ${OVERWRITE_SUBS} | grep -ow "${LANG::2}" | wc -w) != 0 ]];then
-        TARGET_FM=$(sed -n '1,/---/p' ${TARGET})
-        sed -e '1,/---/d' ${GUIDE} > ${TARGET}
+      if [[ -f "${TARGET}" && "${OVERWRITE_MODE}" == "body" && $(echo "${OVERWRITE_SUBS}" | grep -ow "${LANG::2}" | wc -w) != 0 ]];then
+        TARGET_FM=$(sed -n '1,/---/p' "${TARGET}")
+        sed -e '1,/---/d' "${GUIDE}" > "${TARGET}"
         update_link_subs && wait
-        CONTENT=$(echo "${TARGET_FM}" && cat ${TARGET})
-        echo "${CONTENT}" > ${TARGET}
-        GUIDE_UPDATED_KEY=$(grep -Eo "^updated: [0-9]{4}(-[0-9]{2}){2}.+?$" ${GUIDE})
-        TARGET_UPDATED_KEY=$(grep -Eo "^updated: [0-9]{4}(-[0-9]{2}){2}.+?$" ${TARGET})
-        sed -i "2,/---/ s/${TARGET_UPDATED_KEY}/${GUIDE_UPDATED_KEY}/" ${TARGET}
-        GUIDE_ORDER_KEY=$(grep -Eo "^order: [0-9]{3}.+?$" ${GUIDE})
-        TARGET_ORDER_KEY=$(grep -Eo "^order: [0-9]{3}.+?$" ${TARGET})
-        sed -i "2,/---/ s/${TARGET_ORDER_KEY}/${GUIDE_ORDER_KEY}/" ${TARGET}
+        CONTENT=$(echo "${TARGET_FM}" && cat "${TARGET}")
+        echo "${CONTENT}" > "${TARGET}"
+        GUIDE_UPDATED_KEY=$(grep -Eo "^updated: [0-9]{4}(-[0-9]{2}){2}$" "${GUIDE}")
+        TARGET_UPDATED_KEY=$(grep -Eo "^updated: [0-9]{4}(-[0-9]{2}){2}$" "${TARGET}")
+        sed -i '' "2,/---/ s/${TARGET_UPDATED_KEY}/${GUIDE_UPDATED_KEY}/" "${TARGET}"
       else
-        cp -f ${GUIDE} ${TARGET}
+        cp -f "${GUIDE}" "${TARGET}"
         update_link_subs && wait
         if [[ "${GUIDE_SUB::2}" != "${LANG::2}" ]];then
           for i in "${OVHDOCS_LANG[@]}";do
@@ -140,12 +137,12 @@ do
           for d in "${arr[@]}"
           do
             p+="${d}/"
-            if [[ -f ${p}product.${GUIDE_SUB}.md ]];then
-              CANONICAL_URL+=$(cat ${p}product.${GUIDE_SUB}.md | sed -n '2,/---/p' | awk -F ": " '/^slug: / {print $2}'  | tr -d "\r")/
+            if [[ -f "${p}product.${GUIDE_SUB}.md" ]];then
+              CANONICAL_URL+=$(cat "${p}product.${GUIDE_SUB}.md" | sed -n '2,/---/p' | awk -F ": " '/^slug: / {print $2}'  | tr -d "\r")/
             fi
           done
-          CANONICAL_URL+=$(cat ${GUIDE} | sed -n '2,/---/p' | awk -F ": " '/^slug: / {print $2}')/
-          sed -i "2,/---/ s;---;routes:\n    canonical: '${CANONICAL_URL}'\n---;" ${TARGET}
+          CANONICAL_URL+=$(cat "${GUIDE}" | sed -n '2,/---/p' | awk -F ": " '/^slug: / {print $2}')/
+          sed -i '' "2,/---/ s;---;routes:\n    canonical: '${CANONICAL_URL}'\n---;" "${TARGET}"
           echo "CANONICAL_URL: ${CANONICAL_URL}"
           IFS=${OLD_IFS}
         fi
@@ -156,3 +153,4 @@ do
   rm -f ${tasks}
   echo
 done
+
