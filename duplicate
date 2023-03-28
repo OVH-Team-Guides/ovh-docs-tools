@@ -60,6 +60,23 @@ OVHDOCS_LANG=(
   "pl-pl::pl"
   "pt-pt::pt"
 )
+API_LANG=(
+  "de-de::eu"
+  "en-asia::ca"
+  "en-au::ca"
+  "en-ca::ca"
+  "en-gb::eu"
+  "en-ie::eu"
+  "en-sg::ca"
+  "en-us::ca"
+  "es-es::eu"
+  "es-us::ca"
+  "fr-ca::ca"
+  "fr-fr::eu"
+  "it-it::eu"
+  "pl-pl::eu"
+  "pt-pt::eu"
+)
 
 update_link_subs(){
   for i in "${MANAGER[@]}";do
@@ -91,6 +108,26 @@ update_link_subs(){
     fi
   done
   sed -i '' "s,${SEARCH},${REPLACE},g" "${TARGET}"
+  
+ for i in "${OVHCLOUD_LANG[@]}";do
+    if [[ "${i%%::*}" == "${GUIDE_SUB}" ]];then
+      SEARCH="partner.ovhcloud.com/${i##*::}"
+    fi
+    if [[ "${i%%::*}" == "${LANG}" ]];then
+      REPLACE="partner.ovhcloud.com/${i##*::}"
+    fi
+  done
+  sed -i '' "s,${SEARCH},${REPLACE},g" "${TARGET}"
+  
+   for i in "${API_LANG[@]}";do
+    if [[ "${i%%::*}" == "${GUIDE_SUB}" ]];then
+      SEARCH="${i##*::}.api.ovh.com"
+    fi
+    if [[ "${i%%::*}" == "${LANG}" ]];then
+      REPLACE="${i##*::}.api.ovh.com"
+    fi
+  done
+  sed -i '' "s,${SEARCH},${REPLACE},g" "${TARGET}"
 }
 
 git rev-parse --is-inside-work-tree > /dev/null
@@ -105,7 +142,7 @@ do
     GUIDE_CONFIG=$(echo "${task}" | awk -F ":" '{print $2}')
     GUIDE_OVERWRITE=$(echo "${task}" | awk -F ":" '{print $3}')
     GUIDE=$(dirname ${tasks})/guide.${GUIDE_SUB}.md
-    [[ -f "${GUIDE_CONFIG}" ]] && source "${CONFIG_PATH}/${GUIDE_CONFIG}"
+    [[ -f "${CONFIG_PATH}/${GUIDE_CONFIG}" ]] && source "${CONFIG_PATH}/${GUIDE_CONFIG}"
     [[ -n "${GUIDE_OVERWRITE}" ]] && eval "${GUIDE_OVERWRITE}"
     LANGUAGES=("${LANGUAGES[@]/$GUIDE_SUB}")
     for LANG in ${LANGUAGES[@]}
